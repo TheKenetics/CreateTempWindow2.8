@@ -12,21 +12,14 @@ bl_info = {
 
 import bpy
 from bpy.props import EnumProperty, IntProperty, FloatVectorProperty, BoolProperty, FloatProperty, StringProperty
+from bpy.types import PropertyGroup, UIList, Operator, Panel, AddonPreferences
 
-def create_temp_window(context, window_type):
-	# Call user prefs window
-	bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
-	
-	if window_type == "ADDONS":
-		context.preferences.active_section = "ADDONS"
-		
-	elif window_type != "USER_PREFERENCES":
-		# Change area type
-		area = context.window_manager.windows[-1].screen.areas[0]
-		area.type = window_type
+## Helper Functions
 
 
-class CTW_OT_create_temp_window(bpy.types.Operator):
+## Operators
+
+class CTW_OT_create_temp_window(Operator):
 	"""Creates a new window"""
 	bl_idname = "object.ctw_ot_create_temp_window"
 	bl_label = "Create Temp Window"
@@ -47,7 +40,8 @@ class CTW_OT_create_temp_window(bpy.types.Operator):
 			("USER_PREFERENCES","Preferences","","PREFERENCES",9),
 			("FILE_BROWSER","File Browser","","FILE_FOLDER",10),
 			("CONSOLE","Console","","CONSOLE",11),
-			("ADDONS","Addons","","PREFERENCES",12)
+			("ADDONS","Addons","","PREFERENCES",12),
+			("BLENDER_FILE","Blender File","","FILE_FOLDER",13)
 			],
 		name="Window Type",
 		description="Type of window to create",
@@ -59,24 +53,47 @@ class CTW_OT_create_temp_window(bpy.types.Operator):
 		return True
 
 	def execute(self, context):
-		create_temp_window(context, self.window_type)
+		# Call user prefs window
+		bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
+		
+		if self.window_type == "ADDONS":
+			context.preferences.active_section = "ADDONS"
+			
+		elif self.window_type != "USER_PREFERENCES":
+			area = context.window_manager.windows[-1].screen.areas[0]
+			
+			# Catch Custom window type
+			if self.window_type == "BLENDER_FILE":
+				area.type = "OUTLINER"
+				area.spaces[0].display_mode = "LIBRARIES"
+			
+			else:
+				# Change area type
+				area.type = self.window_type
 		return {'FINISHED'}
 
+## Append to UI Functions
 
 def create_temp_window_button(self, context):
 	self.layout.operator_menu_enum(CTW_OT_create_temp_window.bl_idname, "window_type", icon="WINDOW")
 
+## Register
+
 def register():
 	bpy.utils.register_class(CTW_OT_create_temp_window)
 	bpy.types.VIEW3D_MT_object_context_menu.append(create_temp_window_button)
+	bpy.types.NODE_MT_context_menu.append(create_temp_window_button)
 
 def unregister():
+	bpy.types.NODE_MT_context_menu.remove(create_temp_window_button)
 	bpy.types.VIEW3D_MT_object_context_menu.remove(create_temp_window_button)
 	bpy.utils.unregister_class(CTW_OT_create_temp_window)
 
 if __name__ == "__main__":
 	register()
-	
+
+## Notes
+
 """
 GRAPH_EDITOR Graph Editor, Edit drivers and keyframe interpolation.
 DOPESHEET_EDITOR Dope Sheet, Adjust timing of keyframes.
