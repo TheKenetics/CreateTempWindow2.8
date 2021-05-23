@@ -83,8 +83,10 @@ def register():
 	bpy.utils.register_class(CTW_OT_create_temp_window)
 	bpy.types.VIEW3D_MT_object_context_menu.append(create_temp_window_button)
 	bpy.types.NODE_MT_context_menu.append(create_temp_window_button)
+	bpy.types.VIEW3D_MT_edit_mesh_context_menu.append(create_temp_window_button)
 
 def unregister():
+	bpy.types.VIEW3D_MT_edit_mesh_context_menu.remove(create_temp_window_button)
 	bpy.types.NODE_MT_context_menu.remove(create_temp_window_button)
 	bpy.types.VIEW3D_MT_object_context_menu.remove(create_temp_window_button)
 	bpy.utils.unregister_class(CTW_OT_create_temp_window)
